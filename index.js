@@ -38,8 +38,7 @@ function handleEvent(event) {
     diagnosis = "承認欲求モード";
     replyText =
       "診断：" + diagnosis + "\n" +
-      "今お前は“返事＝自分の価値”と勘違いしている。\n" +
-      "焦るな。沈黙しろ。";
+      "返事に価値を預けるな。\n沈黙が最適解だ。";
 
   // ===== 執着モード =====
   } else if (
@@ -51,8 +50,7 @@ function handleEvent(event) {
     diagnosis = "執着モード";
     replyText =
       "診断：" + diagnosis + "\n" +
-      "失う恐怖で動いている。\n" +
-      "追うな。距離を取れ。";
+      "失う恐怖で動くな。\n距離を取れ。";
 
   // ===== 自信喪失モード =====
   } else if (
@@ -64,14 +62,56 @@ function handleEvent(event) {
     diagnosis = "自信喪失モード";
     replyText =
       "診断：" + diagnosis + "\n" +
-      "自分を下に見ている限り勝てない。\n" +
-      "価値を積み上げろ。";
+      "価値は作れる。\n今は積み上げろ。";
+
+  // ===== 依存モード =====
+  } else if (
+    text.includes("会いたい") ||
+    text.includes("いないと無理") ||
+    text.includes("ずっと一緒")
+  ) {
+    diagnosis = "依存モード";
+    replyText =
+      "診断：" + diagnosis + "\n" +
+      "相手中心で動くな。\n軸を自分に戻せ。";
+
+  // ===== 攻めすぎモード =====
+  } else if (
+    text.includes("毎日LINE") ||
+    text.includes("電話したい") ||
+    text.includes("今すぐ会いたい")
+  ) {
+    diagnosis = "攻めすぎモード";
+    replyText =
+      "診断：" + diagnosis + "\n" +
+      "押しすぎは価値を下げる。\n引きを覚えろ。";
+
+  // ===== 受け身モード =====
+  } else if (
+    text.includes("どうすれば") ||
+    text.includes("向こうから") ||
+    text.includes("待つべき")
+  ) {
+    diagnosis = "受け身モード";
+    replyText =
+      "診断：" + diagnosis + "\n" +
+      "待つな。\n状況は作るものだ。";
+
+  // ===== 迷走モード =====
+  } else if (
+    text.includes("分からない") ||
+    text.includes("もう無理") ||
+    text.includes("正解")
+  ) {
+    diagnosis = "迷走モード";
+    replyText =
+      "診断：" + diagnosis + "\n" +
+      "感情が先走っている。\n一度止まれ。";
 
   } else {
     replyText =
       "診断：判定中\n" +
-      "状況を具体的に送れ。\n" +
-      "兄貴が見極める。";
+      "具体的に状況を書け。\n兄貴が読む。";
   }
 
   return client.replyMessage(event.replyToken, {
