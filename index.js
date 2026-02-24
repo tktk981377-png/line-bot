@@ -26,7 +26,6 @@ function handleEvent(event) {
   const client = new line.Client(config);
 
   let replyText = "";
-  let diagnosis = "";
 
   // ===== 承認欲求モード =====
   if (
@@ -35,10 +34,11 @@ function handleEvent(event) {
     text.includes("返信ない") ||
     text.includes("不安")
   ) {
-    diagnosis = "承認欲求モード";
     replyText =
-      "診断：" + diagnosis + "\n" +
-      "返事に価値を預けるな。\n沈黙が最適解だ。";
+      "診断：承認欲求モード\n\n" +
+      "原因：\n返事＝自分の価値になっている。\n\n" +
+      "やるべき行動：\n24時間追撃禁止。\n自分の時間を埋めろ。\n\n" +
+      "今日の指示：\nSNSを見ない。連絡しない。";
 
   // ===== 執着モード =====
   } else if (
@@ -47,10 +47,11 @@ function handleEvent(event) {
     text.includes("ブロック") ||
     text.includes("嫉妬")
   ) {
-    diagnosis = "執着モード";
     replyText =
-      "診断：" + diagnosis + "\n" +
-      "失う恐怖で動くな。\n距離を取れ。";
+      "診断：執着モード\n\n" +
+      "原因：\n失う恐怖で動いている。\n\n" +
+      "やるべき行動：\n距離を取る。\n連絡頻度を下げる。\n\n" +
+      "今日の指示：\n何も送るな。";
 
   // ===== 自信喪失モード =====
   } else if (
@@ -59,10 +60,11 @@ function handleEvent(event) {
     text.includes("どうせ") ||
     text.includes("振られた")
   ) {
-    diagnosis = "自信喪失モード";
     replyText =
-      "診断：" + diagnosis + "\n" +
-      "価値は作れる。\n今は積み上げろ。";
+      "診断：自信喪失モード\n\n" +
+      "原因：\n自分を下に見ている。\n\n" +
+      "やるべき行動：\n小さく勝て。\n運動・勉強・外見改善。\n\n" +
+      "今日の指示：\n何か一つ積み上げろ。";
 
   // ===== 依存モード =====
   } else if (
@@ -70,10 +72,11 @@ function handleEvent(event) {
     text.includes("いないと無理") ||
     text.includes("ずっと一緒")
   ) {
-    diagnosis = "依存モード";
     replyText =
-      "診断：" + diagnosis + "\n" +
-      "相手中心で動くな。\n軸を自分に戻せ。";
+      "診断：依存モード\n\n" +
+      "原因：\n相手中心で思考している。\n\n" +
+      "やるべき行動：\n自分の予定を優先。\n趣味を増やせ。\n\n" +
+      "今日の指示：\n1人の時間を作れ。";
 
   // ===== 攻めすぎモード =====
   } else if (
@@ -81,10 +84,11 @@ function handleEvent(event) {
     text.includes("電話したい") ||
     text.includes("今すぐ会いたい")
   ) {
-    diagnosis = "攻めすぎモード";
     replyText =
-      "診断：" + diagnosis + "\n" +
-      "押しすぎは価値を下げる。\n引きを覚えろ。";
+      "診断：攻めすぎモード\n\n" +
+      "原因：\n押せば近づくと思っている。\n\n" +
+      "やるべき行動：\n連絡頻度を半分に。\n余白を作れ。\n\n" +
+      "今日の指示：\n先に連絡するな。";
 
   // ===== 受け身モード =====
   } else if (
@@ -92,10 +96,11 @@ function handleEvent(event) {
     text.includes("向こうから") ||
     text.includes("待つべき")
   ) {
-    diagnosis = "受け身モード";
     replyText =
-      "診断：" + diagnosis + "\n" +
-      "待つな。\n状況は作るものだ。";
+      "診断：受け身モード\n\n" +
+      "原因：\n他人任せ思考。\n\n" +
+      "やるべき行動：\n提案しろ。\n主導権を取れ。\n\n" +
+      "今日の指示：\n具体的な一文を送れ。";
 
   // ===== 迷走モード =====
   } else if (
@@ -103,15 +108,15 @@ function handleEvent(event) {
     text.includes("もう無理") ||
     text.includes("正解")
   ) {
-    diagnosis = "迷走モード";
     replyText =
-      "診断：" + diagnosis + "\n" +
-      "感情が先走っている。\n一度止まれ。";
+      "診断：迷走モード\n\n" +
+      "原因：\n感情で判断している。\n\n" +
+      "やるべき行動：\n一度距離を取る。\n紙に書き出せ。\n\n" +
+      "今日の指示：\n今日は何もしない。";
 
   } else {
     replyText =
-      "診断：判定中\n" +
-      "具体的に状況を書け。\n兄貴が読む。";
+      "診断：判定中\n\n状況を具体的に書け。\n兄貴が分析する。";
   }
 
   return client.replyMessage(event.replyToken, {
