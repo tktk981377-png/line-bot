@@ -35,17 +35,33 @@ async function handleEvent(event) {
 
   let diagnosis = "判定中";
   let columnName = "";
+  let actionPlan = "";
 
   // ===== 診断判定 =====
   if (text.includes("既読無視") || text.includes("不安")) {
     diagnosis = "承認欲求モード";
     columnName = "approval_count";
+    actionPlan =
+      "今日やること：\n" +
+      "① 返信を最低3時間待て\n" +
+      "② SNSを見ない\n" +
+      "③ 30分自己投資（筋トレ・作業）";
   } else if (text.includes("冷められた") || text.includes("嫉妬")) {
     diagnosis = "執着モード";
     columnName = "attachment_count";
+    actionPlan =
+      "今日やること：\n" +
+      "① 相手のSNSを見ない\n" +
+      "② 24時間連絡するな\n" +
+      "③ 自分の予定を1つ入れろ";
   } else if (text.includes("自信ない") || text.includes("振られた")) {
     diagnosis = "自信喪失モード";
     columnName = "confidence_count";
+    actionPlan =
+      "今日やること：\n" +
+      "① 姿勢を直せ\n" +
+      "② 小さな成功を1つ作れ\n" +
+      "③ LINEを追うな";
   }
 
   try {
@@ -56,7 +72,6 @@ async function handleEvent(event) {
 
     let replyText = "";
 
-    // ===== 新規ユーザー =====
     if (result.rows.length === 0) {
       await pool.query(
         "INSERT INTO users (user_id, last_diagnosis, approval_count, attachment_count, confidence_count) VALUES ($1, $2, $3, $4, $5)",
@@ -71,7 +86,7 @@ async function handleEvent(event) {
 
       replyText =
         "診断：" + diagnosis + "\n\n" +
-        "今日から兄貴が伴走する。\n" +
+        actionPlan + "\n\n" +
         "明日も報告しろ。";
 
     } else {
@@ -90,7 +105,6 @@ async function handleEvent(event) {
         );
       }
 
-      // ===== 推移分析 =====
       let analysis = "";
 
       if (user.last_diagnosis === diagnosis) {
@@ -98,10 +112,9 @@ async function handleEvent(event) {
       } else {
         analysis =
           user.last_diagnosis + " から " + diagnosis +
-          " に移行している。\n感情の形は違うが、源は同じ可能性が高い。";
+          " に移行している。\n改善の兆しだ。";
       }
 
-      // ===== トーン変化 =====
       let tone = "";
 
       if (newEmotionCount <= 2) {
@@ -117,6 +130,7 @@ async function handleEvent(event) {
         "今回：" + diagnosis + "\n" +
         "このモード通算：" + newEmotionCount + "回\n\n" +
         analysis + "\n\n" +
+        actionPlan + "\n\n" +
         tone + "\n\n" +
         "明日も報告しろ。";
     }
