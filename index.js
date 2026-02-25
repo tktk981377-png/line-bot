@@ -59,8 +59,14 @@ async function handleEvent(event) {
     // ===== 新規ユーザー =====
     if (result.rows.length === 0) {
       await pool.query(
-        "INSERT INTO users (user_id, last_diagnosis, count) VALUES ($1, $2, $3)",
-        [userId, diagnosis, 1]
+        "INSERT INTO users (user_id, last_diagnosis, approval_count, attachment_count, confidence_count) VALUES ($1, $2, $3, $4, $5)",
+        [
+          userId,
+          diagnosis,
+          diagnosis === "承認欲求モード" ? 1 : 0,
+          diagnosis === "執着モード" ? 1 : 0,
+          diagnosis === "自信喪失モード" ? 1 : 0,
+        ]
       );
 
       replyText =
@@ -70,7 +76,6 @@ async function handleEvent(event) {
 
     } else {
       const user = result.rows[0];
-
       let newEmotionCount = 0;
 
       if (columnName) {
@@ -85,6 +90,18 @@ async function handleEvent(event) {
         );
       }
 
+      // ===== 推移分析 =====
+      let analysis = "";
+
+      if (user.last_diagnosis === diagnosis) {
+        analysis = "同じ感情パターンを継続している。根本原因を直視しろ。";
+      } else {
+        analysis =
+          user.last_diagnosis + " から " + diagnosis +
+          " に移行している。\n感情の形は違うが、源は同じ可能性が高い。";
+      }
+
+      // ===== トーン変化 =====
       let tone = "";
 
       if (newEmotionCount <= 2) {
@@ -99,6 +116,7 @@ async function handleEvent(event) {
         "前回：" + user.last_diagnosis + "\n" +
         "今回：" + diagnosis + "\n" +
         "このモード通算：" + newEmotionCount + "回\n\n" +
+        analysis + "\n\n" +
         tone + "\n\n" +
         "明日も報告しろ。";
     }
