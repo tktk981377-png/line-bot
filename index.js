@@ -40,10 +40,10 @@ async function handleEvent(event) {
   }
 
   const userId = event.source.userId;
-  const text = event.message.text;
+  const text = event.message.text.trim();
   const client = new line.Client(config);
 
-  // 🔥 覚悟確認分岐
+  // 🔥 無料ミッション覚悟確認
   if (text === "できる") {
     return client.replyMessage(event.replyToken, {
       type: "text",
@@ -51,6 +51,20 @@ async function handleEvent(event) {
         "覚悟を確認した。\n" +
         "今日からお前は“選ばれる側”だ。\n\n" +
         "明日、結果だけ報告しろ。"
+    });
+  }
+
+  // 🔥 有料温度測定（まだ売らない）
+  if (text === "覚悟") {
+    return client.replyMessage(event.replyToken, {
+      type: "text",
+      text:
+        "いい覚悟だ。\n\n" +
+        "今の状況を詳しく送れ。\n" +
+        "・相手との関係\n" +
+        "・今の問題\n" +
+        "・どうなりたいか\n\n" +
+        "3日間、本気で変える準備があるなら具体的に書け。"
     });
   }
 
@@ -115,7 +129,9 @@ async function handleEvent(event) {
         "追うな。\n" +
         "選ばれる男の行動をしろ。\n\n" +
         "今日のミッション、実行できるか？\n" +
-        "「できる」と送れ。";
+        "「できる」と送れ。\n\n" +
+        "本気で3日間で変わりたいなら\n" +
+        "「覚悟」と送れ。";
 
     } else {
       const user = result.rows[0];
@@ -185,7 +201,9 @@ async function handleEvent(event) {
         "追うな。\n" +
         "選ばれる男の行動をしろ。\n\n" +
         "今日のミッション、実行できるか？\n" +
-        "「できる」と送れ。";
+        "「できる」と送れ。\n\n" +
+        "本気で3日間で変わりたいなら\n" +
+        "「覚悟」と送れ。";
     }
 
     return client.replyMessage(event.replyToken, {
