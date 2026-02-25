@@ -47,7 +47,10 @@ async function handleEvent(event) {
   if (text === "できる") {
     return client.replyMessage(event.replyToken, {
       type: "text",
-      text: "覚悟を確認した。\n明日、結果だけ報告しろ。"
+      text:
+        "覚悟を確認した。\n" +
+        "今日からお前は“選ばれる側”だ。\n\n" +
+        "明日、結果だけ報告しろ。"
     });
   }
 
@@ -55,11 +58,12 @@ async function handleEvent(event) {
   let columnName = "";
   let actionPlan = "";
 
+  // ===== 診断 =====
   if (text.includes("既読無視") || text.includes("不安")) {
     diagnosis = "承認欲求モード";
     columnName = "approval_count";
     actionPlan =
-      "今日やること：\n" +
+      "今日のミッション：\n" +
       "① 返信を最低3時間待て\n" +
       "② SNSを見ない\n" +
       "③ 30分自己投資（筋トレ・作業）";
@@ -67,7 +71,7 @@ async function handleEvent(event) {
     diagnosis = "執着モード";
     columnName = "attachment_count";
     actionPlan =
-      "今日やること：\n" +
+      "今日のミッション：\n" +
       "① 相手のSNSを見ない\n" +
       "② 24時間連絡するな\n" +
       "③ 自分の予定を1つ入れろ";
@@ -75,7 +79,7 @@ async function handleEvent(event) {
     diagnosis = "自信喪失モード";
     columnName = "confidence_count";
     actionPlan =
-      "今日やること：\n" +
+      "今日のミッション：\n" +
       "① 姿勢を直せ\n" +
       "② 小さな成功を1つ作れ\n" +
       "③ LINEを追うな";
@@ -106,15 +110,17 @@ async function handleEvent(event) {
       );
 
       replyText =
-        "診断：" + diagnosis + "\n" +
-        "継続：1日目\n\n" +
+        "【診断】" + diagnosis + "\n\n" +
         actionPlan + "\n\n" +
-        "今日の行動、実行できるか？\n「できる」と送れ。";
+        "追うな。\n" +
+        "選ばれる男の行動をしろ。\n\n" +
+        "今日のミッション、実行できるか？\n" +
+        "「できる」と送れ。";
 
     } else {
       const user = result.rows[0];
 
-      // 継続ロジック
+      // ===== 継続管理 =====
       let newStreak = user.streak_count || 0;
       let streakMessage = "";
 
@@ -122,10 +128,10 @@ async function handleEvent(event) {
         streakMessage = "継続：" + newStreak + "日目";
       } else if (user.last_report_date === yesterday) {
         newStreak += 1;
-        streakMessage = "継続：" + newStreak + "日目（習慣化ラインだ）";
+        streakMessage = "継続：" + newStreak + "日目（習慣化ライン）";
       } else {
         newStreak = 1;
-        streakMessage = "連続は途切れたが、今日からまた積み上げろ。";
+        streakMessage = "連続は途切れた。\n今日からまた積み上げろ。";
       }
 
       let newEmotionCount = 0;
@@ -144,35 +150,42 @@ async function handleEvent(event) {
         );
       }
 
+      // ===== 推移分析 =====
       let analysis = "";
 
       if (user.last_diagnosis === diagnosis) {
-        analysis = "同じ感情パターンを継続している。根本原因を直視しろ。";
+        analysis =
+          "同じ感情を繰り返している。\n" +
+          "選ばれる男は、同じ失敗を繰り返さない。";
       } else {
         analysis =
-          user.last_diagnosis + " から " + diagnosis +
-          " に移行している。\n改善の兆しだ。";
+          user.last_diagnosis + " → " + diagnosis +
+          "\n感情の形が変わっている。\n改善の兆しだ。";
       }
 
+      // ===== トーン =====
       let tone = "";
 
       if (newEmotionCount <= 2) {
-        tone = "まだ修正可能だ。落ち着いてやれ。";
+        tone = "まだ立て直せる。冷静にやれ。";
       } else if (newEmotionCount <= 5) {
-        tone = "この感情パターンを繰り返している。行動を変えろ。";
+        tone = "行動を変えなければ結果は変わらない。";
       } else {
-        tone = "何回同じ感情に支配される？本気で変わる気あるか？";
+        tone = "何回同じ感情に支配される？\n選ばれる側に回れ。";
       }
 
       replyText =
-        "前回：" + user.last_diagnosis + "\n" +
-        "今回：" + diagnosis + "\n" +
-        "このモード通算：" + newEmotionCount + "回\n" +
+        "【前回】" + user.last_diagnosis + "\n" +
+        "【今回】" + diagnosis + "\n" +
+        "通算：" + newEmotionCount + "回\n" +
         streakMessage + "\n\n" +
         analysis + "\n\n" +
         actionPlan + "\n\n" +
         tone + "\n\n" +
-        "今日の行動、実行できるか？\n「できる」と送れ。";
+        "追うな。\n" +
+        "選ばれる男の行動をしろ。\n\n" +
+        "今日のミッション、実行できるか？\n" +
+        "「できる」と送れ。";
     }
 
     return client.replyMessage(event.replyToken, {
@@ -184,7 +197,7 @@ async function handleEvent(event) {
     console.error("DB Error:", err);
     return client.replyMessage(event.replyToken, {
       type: "text",
-      text: "DB接続エラーが発生している。兄貴が調整中だ。"
+      text: "システム調整中だ。だが逃げるな。"
     });
   }
 }
