@@ -25,7 +25,7 @@ app.post("/webhook", line.middleware(config), async (req, res) => {
 });
 
 function todayStr() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+  return new Date().toISOString().slice(0, 10);
 }
 
 function yesterdayStr() {
@@ -43,11 +43,18 @@ async function handleEvent(event) {
   const text = event.message.text;
   const client = new line.Client(config);
 
+  // 🔥 覚悟確認分岐
+  if (text === "できる") {
+    return client.replyMessage(event.replyToken, {
+      type: "text",
+      text: "覚悟を確認した。\n明日、結果だけ報告しろ。"
+    });
+  }
+
   let diagnosis = "判定中";
   let columnName = "";
   let actionPlan = "";
 
-  // ===== 診断判定 =====
   if (text.includes("既読無視") || text.includes("不安")) {
     diagnosis = "承認欲求モード";
     columnName = "approval_count";
@@ -80,14 +87,13 @@ async function handleEvent(event) {
       [userId]
     );
 
-    let replyText = "";
     const today = todayStr();
     const yesterday = yesterdayStr();
+    let replyText = "";
 
-    // ===== 新規ユーザー =====
     if (result.rows.length === 0) {
       await pool.query(
-        "INSERT INTO users (user_id, last_diagnosis, approval_count, attachment_count, confidence_count, streak_count, last_report_date) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        "INSERT INTO users (user_id, last_diagnosis, approval_count, attachment_count, confidence_count, streak_count, last_report_date) VALUES ($1,$2,$3,$4,$5,$6,$7)",
         [
           userId,
           diagnosis,
@@ -95,7 +101,7 @@ async function handleEvent(event) {
           diagnosis === "執着モード" ? 1 : 0,
           diagnosis === "自信喪失モード" ? 1 : 0,
           1,
-          today,
+          today
         ]
       );
 
@@ -103,44 +109,43 @@ async function handleEvent(event) {
         "診断：" + diagnosis + "\n" +
         "継続：1日目\n\n" +
         actionPlan + "\n\n" +
-        "明日も報告しろ。";
+        "今日の行動、実行できるか？\n「できる」と送れ。";
 
     } else {
       const user = result.rows[0];
 
-      // ===== 継続ロジック =====
+      // 継続ロジック
       let newStreak = user.streak_count || 0;
       let streakMessage = "";
 
       if (user.last_report_date === today) {
-        // 同日中は増やさない
         streakMessage = "継続：" + newStreak + "日目";
       } else if (user.last_report_date === yesterday) {
         newStreak += 1;
         streakMessage = "継続：" + newStreak + "日目（習慣化ラインだ）";
       } else {
         newStreak = 1;
-        streakMessage = "継続リセット。今日から再スタートだ。";
+        streakMessage = "連続は途切れたが、今日からまた積み上げろ。";
       }
 
-      // ===== 感情カウント更新 =====
       let newEmotionCount = 0;
+
       if (columnName) {
         newEmotionCount = (user[columnName] || 0) + 1;
 
         await pool.query(
           `UPDATE users 
-           SET last_diagnosis = $1,
-               ${columnName} = $2,
-               streak_count = $3,
-               last_report_date = $4
-           WHERE user_id = $5`,
+           SET last_diagnosis=$1,
+               ${columnName}=$2,
+               streak_count=$3,
+               last_report_date=$4
+           WHERE user_id=$5`,
           [diagnosis, newEmotionCount, newStreak, today, userId]
         );
       }
 
-      // ===== 推移分析 =====
       let analysis = "";
+
       if (user.last_diagnosis === diagnosis) {
         analysis = "同じ感情パターンを継続している。根本原因を直視しろ。";
       } else {
@@ -149,8 +154,8 @@ async function handleEvent(event) {
           " に移行している。\n改善の兆しだ。";
       }
 
-      // ===== トーン =====
       let tone = "";
+
       if (newEmotionCount <= 2) {
         tone = "まだ修正可能だ。落ち着いてやれ。";
       } else if (newEmotionCount <= 5) {
@@ -167,19 +172,19 @@ async function handleEvent(event) {
         analysis + "\n\n" +
         actionPlan + "\n\n" +
         tone + "\n\n" +
-        "明日も報告しろ。";
+        "今日の行動、実行できるか？\n「できる」と送れ。";
     }
 
     return client.replyMessage(event.replyToken, {
       type: "text",
-      text: replyText,
+      text: replyText
     });
 
-  } catch (dbError) {
-    console.error("DB Error:", dbError);
+  } catch (err) {
+    console.error("DB Error:", err);
     return client.replyMessage(event.replyToken, {
       type: "text",
-      text: "DB接続エラーが発生している。兄貴が調整中だ。",
+      text: "DB接続エラーが発生している。兄貴が調整中だ。"
     });
   }
 }
