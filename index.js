@@ -9,7 +9,6 @@ const config = {
   channelSecret: process.env.CHANNEL_SECRET,
 };
 
-// PostgreSQL接続（Supabase Pooler用）
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
@@ -34,19 +33,22 @@ async function handleEvent(event) {
   const text = event.message.text;
   const client = new line.Client(config);
 
-  // ===== 診断ロジック =====
   let diagnosis = "判定中";
+  let columnName = "";
 
+  // ===== 診断判定 =====
   if (text.includes("既読無視") || text.includes("不安")) {
     diagnosis = "承認欲求モード";
+    columnName = "approval_count";
   } else if (text.includes("冷められた") || text.includes("嫉妬")) {
     diagnosis = "執着モード";
+    columnName = "attachment_count";
   } else if (text.includes("自信ない") || text.includes("振られた")) {
     diagnosis = "自信喪失モード";
+    columnName = "confidence_count";
   }
 
   try {
-    // ===== ユーザー取得 =====
     const result = await pool.query(
       "SELECT * FROM users WHERE user_id = $1",
       [userId]
@@ -67,29 +69,36 @@ async function handleEvent(event) {
         "明日も報告しろ。";
 
     } else {
-      const previous = result.rows[0].last_diagnosis;
-      const newCount = result.rows[0].count + 1;
+      const user = result.rows[0];
 
-      await pool.query(
-        "UPDATE users SET last_diagnosis = $1, count = $2 WHERE user_id = $3",
-        [diagnosis, newCount, userId]
-      );
+      let newEmotionCount = 0;
 
-      // ===== 回数で態度変更 =====
+      if (columnName) {
+        newEmotionCount = (user[columnName] || 0) + 1;
+
+        await pool.query(
+          `UPDATE users 
+           SET last_diagnosis = $1,
+               ${columnName} = $2
+           WHERE user_id = $3`,
+          [diagnosis, newEmotionCount, userId]
+        );
+      }
+
       let tone = "";
 
-      if (newCount <= 2) {
+      if (newEmotionCount <= 2) {
         tone = "まだ修正可能だ。落ち着いてやれ。";
-      } else if (newCount <= 5) {
-        tone = "同じ感情に飲まれすぎだ。行動を変えろ。";
+      } else if (newEmotionCount <= 5) {
+        tone = "この感情パターンを繰り返している。行動を変えろ。";
       } else {
-        tone = "何回同じことで止まる？本気で変わる気あるか？";
+        tone = "何回同じ感情に支配される？本気で変わる気あるか？";
       }
 
       replyText =
-        "前回：" + previous + "\n" +
+        "前回：" + user.last_diagnosis + "\n" +
         "今回：" + diagnosis + "\n" +
-        "通算：" + newCount + "回目\n\n" +
+        "このモード通算：" + newEmotionCount + "回\n\n" +
         tone + "\n\n" +
         "明日も報告しろ。";
     }
