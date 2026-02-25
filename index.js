@@ -9,12 +9,10 @@ const config = {
   channelSecret: process.env.CHANNEL_SECRET,
 };
 
-// PostgreSQL接続
+// PostgreSQL接続（Supabase Pooler用）
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: { rejectUnauthorized: false },
 });
 
 app.post("/webhook", line.middleware(config), async (req, res) => {
@@ -36,6 +34,7 @@ async function handleEvent(event) {
   const text = event.message.text;
   const client = new line.Client(config);
 
+  // ===== 診断ロジック =====
   let diagnosis = "判定中";
 
   if (text.includes("既読無視") || text.includes("不安")) {
@@ -47,7 +46,7 @@ async function handleEvent(event) {
   }
 
   try {
-    // ユーザー取得
+    // ===== ユーザー取得 =====
     const result = await pool.query(
       "SELECT * FROM users WHERE user_id = $1",
       [userId]
@@ -55,15 +54,17 @@ async function handleEvent(event) {
 
     let replyText = "";
 
+    // ===== 新規ユーザー =====
     if (result.rows.length === 0) {
-      // 新規ユーザー
       await pool.query(
         "INSERT INTO users (user_id, last_diagnosis, count) VALUES ($1, $2, $3)",
         [userId, diagnosis, 1]
       );
 
       replyText =
-        "診断：" + diagnosis + "\n\n今日から兄貴が伴走する。";
+        "診断：" + diagnosis + "\n\n" +
+        "今日から兄貴が伴走する。\n" +
+        "明日も報告しろ。";
 
     } else {
       const previous = result.rows[0].last_diagnosis;
@@ -74,10 +75,23 @@ async function handleEvent(event) {
         [diagnosis, newCount, userId]
       );
 
+      // ===== 回数で態度変更 =====
+      let tone = "";
+
+      if (newCount <= 2) {
+        tone = "まだ修正可能だ。落ち着いてやれ。";
+      } else if (newCount <= 5) {
+        tone = "同じ感情に飲まれすぎだ。行動を変えろ。";
+      } else {
+        tone = "何回同じことで止まる？本気で変わる気あるか？";
+      }
+
       replyText =
         "前回：" + previous + "\n" +
-        "今回：" + diagnosis + "\n\n" +
-        "改善できているか確認しろ。";
+        "今回：" + diagnosis + "\n" +
+        "通算：" + newCount + "回目\n\n" +
+        tone + "\n\n" +
+        "明日も報告しろ。";
     }
 
     return client.replyMessage(event.replyToken, {
